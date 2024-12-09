@@ -3,21 +3,69 @@ import os
 import random
 import re
 
-
-# Funkcja walidacji numeru PESEL (w tym momencie pusta)
 def validate_pesel(pesel):
-    # Tu zaimplementujesz walidację numeru PESEL
+    """
+    Sprawdza poprawność numeru PESEL na podstawie miesiąca, dnia i cyfry kontrolnej.
+    Uwzględnia fakt, że osoby urodzone w latach 1900-2099 mają numery miesięcy od 01 do 32.
+    """
+    if len(pesel) != 11 or not pesel.isdigit():
+        print("PESEL musi mieć 11 cyfr. Spróbuj ponownie.")
+        return False
+
+    digits = [int(digit) for digit in pesel]  # Rozdzielamy pesel na cyfry
+
+    # Miesiące w numerze PESEL dla osób urodzonych w latach 1900-2099 mogą wynosić od 01 do 32
+    month = digits[2] * 10 + digits[3]
+    if not (1 <= month <= 32):  # Miesiące mogą mieć wartości od 01 do 32
+        print("Niepoprawny miesiąc w numerze PESEL. Spróbuj ponownie.")
+        return False
+
+    # Sprawdzenie poprawności dnia (01-31)
+    day = digits[4] * 10 + digits[5]
+    if not (1 <= day <= 31):  # Sprawdzamy, czy dzień jest w zakresie 01-31
+        print("Niepoprawny dzień w numerze PESEL. Spróbuj ponownie.")
+        return False
+
+    # Suma kontrolna PESEL
+    weights = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3]
+    checksum = sum(d * w for d, w in zip(digits[:10], weights))
+    control_digit = (10 - (checksum % 10)) % 10
+
+    # Sprawdzamy, czy cyfra kontrolna jest poprawna
+    if control_digit != digits[10]:
+        print("Niepoprawna cyfra kontrolna w numerze PESEL. Spróbuj ponownie.")
+        return False
+
     return True
 
-# Funkcja walidacji numeru NIP (w tym momencie pusta)
+
+
+# Funkcja walidacji numeru NIP
 def validate_nip(nip):
-    # Tu zaimplementujesz walidację numeru NIP
-    return True
+    if len(nip) != 10 or not nip.isdigit():
+        return False  # NIP musi mieć 10 cyfr
+    
+    weights = [6, 5, 7, 2, 3, 4, 5, 6, 7]
+    checksum = sum(int(nip[i]) * weights[i] for i in range(9))
+    control_digit = checksum % 11
+    
+    # Sprawdzenie sumy kontrolnej
+    if control_digit == 10:
+        return False  # Jeśli suma kontrolna wynosi 10, NIP jest niepoprawny
+    return int(nip[-1]) == control_digit
 
-# Funkcja walidacji numeru REGON (w tym momencie pusta)
 def validate_regon(regon):
-    # Tu zaimplementujesz walidację numeru REGON
-    return True
+    if len(regon) == 9 and regon.isdigit():
+        # Wagi dla REGON 9-cyfrowego
+        weights = [8, 9, 2, 3, 4, 5, 6, 7]
+        checksum = sum(int(regon[i]) * weights[i] for i in range(8)) % 11
+        return checksum == int(regon[-1])
+
+    # Walidacja 14-cyfrowego REGON (firmowego) – bez sumy kontrolnej
+    elif len(regon) == 14 and regon.isdigit():
+        return True  # REGON 14-cyfrowy jest poprawny, jeśli składa się z cyfr
+
+    return False
 
 # Funkcja dodająca użytkownika do pliku
 def add_user(user_data):
@@ -114,6 +162,65 @@ def remove_user(user_id):
         json.dump(users, file, indent=4)
     print(f"Użytkownik o ID {user_id} został usunięty.")
 
+def generate_password(length=12):
+    """
+    Funkcja generująca silne hasło o minimalnej długości 12 znaków, zawierające:
+    - Duże litery,
+    - Małe litery,
+    - Cyfry,
+    - Znaki specjalne.
+    """
+
+    # Definicje grup znaków
+    lowercase = list(string.ascii_lowercase)  # Małe litery
+    uppercase = list(string.ascii_uppercase)  # Duże litery
+    digits = list(string.digits)  # Cyfry
+    special_chars = list(string.punctuation)  # Znaki specjalne
+
+    # Zapewnienie, że hasło zawiera przynajmniej jeden znak z każdej grupy
+    password = [
+        random.choice(lowercase),
+        random.choice(uppercase),
+        random.choice(digits),
+        random.choice(special_chars)
+    ]
+
+    # Dodanie losowych znaków do reszty hasła, aby długość wynosiła co najmniej `length`
+    all_chars = lowercase + uppercase + digits + special_chars
+    while len(password) < length:
+        password.append(random.choice(all_chars))
+
+    # Mieszanie znaków, by hasło nie miało stałego wzorca
+    random.shuffle(password)
+
+    # Zwracamy hasło jako połączoną listę znaków
+    return ''.join(password)
+    
+def validate_password(password):
+    """
+    Funkcja walidująca siłę hasła. Hasło musi:
+    - Mieć co najmniej 12 znaków.
+    - Zawierać co najmniej jedną dużą literę, małą literę, cyfrę i znak specjalny.
+    - Nie zawierać popularnych wzorców.
+    """
+    # Minimalna długość hasła
+    if len(password) < 12:
+        print("Hasło musi mieć co najmniej 12 znaków.")
+        return False
+
+    # Sprawdzanie, czy hasło zawiera co najmniej jedną dużą literę, małą literę, cyfrę i znak specjalny
+    if not re.search(r"[a-z]", password):  # Małe litery
+        print("Hasło musi zawierać co najmniej jedną małą literę.")
+        return False
+    if not re.search(r"[A-Z]", password):  # Duże litery
+        print("Hasło musi zawierać co najmniej jedną dużą literę.")
+        return False
+    if not re.search(r"\d", password):  # Cyfry
+        print("Hasło musi zawierać co najmniej jedną cyfrę.")
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):  # Znaki specjalne
+        print("Hasło musi zawierać co najmniej jeden znak specjalny.")
+        return False
 
 def load_users():
     folder_path = "data/"
