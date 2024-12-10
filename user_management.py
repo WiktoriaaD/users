@@ -15,9 +15,8 @@ def validate_pesel(pesel):
 
     digits = [int(digit) for digit in pesel]  # Rozdzielamy pesel na cyfry
 
-    # Miesiące w numerze PESEL dla osób urodzonych w latach 1900-2099 mogą wynosić od 01 do 32
     month = digits[2] * 10 + digits[3]
-    if not (1 <= month <= 32):  # Miesiące mogą mieć wartości od 01 do 32
+    if not (1 <= month <= 32): 
         print("Niepoprawny miesiąc w numerze PESEL. Spróbuj ponownie.")
         return False
 
