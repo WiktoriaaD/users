@@ -2,6 +2,7 @@ import json
 import os
 import random
 import re
+import string
 
 def validate_pesel(pesel):
     """
@@ -177,7 +178,6 @@ def generate_password(length=12):
     digits = list(string.digits)  # Cyfry
     special_chars = list(string.punctuation)  # Znaki specjalne
 
-    # Zapewnienie, że hasło zawiera przynajmniej jeden znak z każdej grupy
     password = [
         random.choice(lowercase),
         random.choice(uppercase),
@@ -185,15 +185,13 @@ def generate_password(length=12):
         random.choice(special_chars)
     ]
 
-    # Dodanie losowych znaków do reszty hasła, aby długość wynosiła co najmniej `length`
     all_chars = lowercase + uppercase + digits + special_chars
     while len(password) < length:
         password.append(random.choice(all_chars))
 
-    # Mieszanie znaków, by hasło nie miało stałego wzorca
+
     random.shuffle(password)
 
-    # Zwracamy hasło jako połączoną listę znaków
     return ''.join(password)
     
 def validate_password(password):
@@ -254,7 +252,8 @@ if __name__ == "__main__":
         print("2. Edytuj użytkownika")
         print("3. Usuń użytkownika")
         print("4. Wyświetl wszystkich użytkowników")
-        print("5. Zakończ")
+        print("5. Generuj i sprawdz sile hasla")
+        print("6. Zakończ")
 
         option = input("Wybierz opcję: ")
         if option == "1":
@@ -302,5 +301,14 @@ if __name__ == "__main__":
         elif option == "4":
             load_users()
         elif option == "5":
+            # Generowanie i walidacja hasła
+            password = generate_password()
+            print(f"Wygenerowane hasło: {password}")
+
+            if validate_password(password):
+                print("Wygenerowane hasło jest silne.")
+            else:
+                print("Wygenerowane hasło jest za słabe.")
+        elif option == "6":
             print("Zakończenie programu")
             break
